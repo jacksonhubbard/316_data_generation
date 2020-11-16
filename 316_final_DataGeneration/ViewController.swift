@@ -55,14 +55,46 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
 //        to add book data
-        convertCSVIntoArray()
+//        convertCSVIntoArray()
         
 //        to add user data
 //        addUsers()
         
 //        deleteData()
+        
+//        editData()
+        
+        addReview()
     }
 
+    func editData(){
+        let queryRef = db.collection("Books").limit(to: 100).getDocuments() { (querySnapshot, err) in
+          if let err = err {
+            print("Error getting documents: \(err)")
+          } else {
+            
+            var i = 0
+            for document in querySnapshot!.documents {
+                if i < 100 {
+                    i += 1
+                    let docData = document.data()
+                    let bookUID = docData["book_UID"] as? String ?? "User not found"
+                    
+                    self.db.collection("Books").document(bookUID).updateData(["is_active": true]) { err in
+                    if let err = err {
+                        print("Error writing document: \(err)")
+                    } else {
+                        print("is active updated!", i) }}
+                }
+            }
+          }
+        }
+    }
+    
+    
+    
+    
+    
     func convertCSVIntoArray() {
 
         //locate the file you want to use
@@ -467,6 +499,102 @@ class ViewController: UIViewController {
         }
         
     }
+    
+    
+    
+    func randomReview() -> [String: String] {
+            var ans = [String: String]()
+            let reviewList = ["This book is so good!", "This book is incredible", "Best book I have ever read", "This book is average", "This book is so boring. I would not wish it upon my worst enemy"]
+            let titleList = ["My favorite book ever!", "AMAZING", "READ THIS", "OK Book", "Do not buy this book"]
+            
+            let count = reviewList.count
+            let randomIndex = Int.random(in: 0..<count)
+            let randomReview = reviewList[randomIndex]
+            let randomTitle = titleList[randomIndex]
+            
+            var stars = 0
+            if randomIndex <= 2{
+                stars = Int.random(in: 4..<6)
+            }
+            else if randomIndex == 3 {
+                stars = Int.random(in: 2..<4)
+            }
+            else {
+                stars = 1
+            }
+            
+            
+            let startList = ["1", "2", "3", "4", "5"]
+            
+            ans["review"] = randomReview
+            ans["title"] = randomTitle
+            ans["stars"] = String(stars)
+
+            
+            return ans
+        }
+        
+        
+        func addReview(){
+            let queryRef = db.collection("Books").getDocuments() { (querySnapshot, err) in
+              if let err = err {
+                print("Error getting documents: \(err)")
+              } else {
+                
+                for document in querySnapshot!.documents {
+                    let docData = document.data()
+                    let bookUID = docData["book_UID"] as? String ?? "User not found"
+                    let curr_owner = docData["curr_owner"] as? String ?? "User not found"
+
+                    let prev_owners = docData["previous_owners"] as? [String]
+                    let prev_owner = prev_owners?[0]
+                    
+                    let review1UID = UUID().uuidString
+                    let review2UID = UUID().uuidString
+
+                    
+                    
+                    let review1Data = self.randomReview()
+                    let review1Title = review1Data["title"]
+                    let review1Review = review1Data["review"]
+                    let review1Stars = review1Data["stars"]
+                    
+                    let review2Data = self.randomReview()
+                    let review2Title = review2Data["title"]
+                    let review2Review = review2Data["review"]
+                    let review2Stars = review2Data["stars"]
+                    
+                    self.db.collection("Books").document(bookUID).collection("Reviews").document(review1UID).setData([ "author": prev_owner,
+                                                                                                                       "title": review1Title,
+                                                                                                                       "numStars": review1Stars,
+                                                                                                                       "review": review1Review,
+                                                                                                                       "date_posted": "11/14/2020"
+                    ]) { err in
+                    if let err = err {
+                        print("Error writing document: \(err)")
+                    } else {
+                        print("review1 successfully written!")
+                        }}
+                    
+    //                self.db.collection("Books").document(bookUID).collection("Reviews").document(review2UID).setData([ "author": curr_owner,
+    //                                                                                                                   "title": review2Title,
+    //                                                                                                                   "numStars": review2Stars,
+    //                                                                                                                   "review": review2Review,
+    //                                                                                                                   "date_posted": "11/15/2020"
+    //                ]) { err in
+    //                if let err = err {
+    //                    print("Error writing document: \(err)")
+    //                } else {
+    //                    print("review2 successfully written!")
+    //                    }}
+
+                        
+                
+                    
+                }
+              }
+            }
+        }
     
 }
 
